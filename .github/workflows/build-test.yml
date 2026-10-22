@@ -183,6 +183,10 @@ jobs:
         if: ${{ !cancelled() && steps.test.outputs.built == 'true' }}
         run: |
           set -euo pipefail
+          # Xcode 27 runs tests on a cloned simulator and can leave the pinned one
+          # shut down; boot it again before installing the app for launch evidence.
+          xcrun simctl boot "${{ steps.prep.outputs.udid }}" 2>/dev/null || true
+          xcrun simctl bootstatus "${{ steps.prep.outputs.udid }}" -b
           APP="$DERIVED_DATA/Build/Products/Debug-iphonesimulator/${SCHEME}.app"
           test -f "$APP/Assets.car"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "$BUNDLE_ID"
